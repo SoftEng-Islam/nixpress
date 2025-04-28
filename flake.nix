@@ -17,7 +17,7 @@
           packages = with pkgs; [
             wordpress
             php82
-            phpPackages.mysql
+            phpPackages.mysqlclient # Use this instead of phpPackages.mysql
             php82Packages.gd
             php82Packages.mbstring
             php82Packages.xml
@@ -55,7 +55,7 @@
                 nginx
                 php82
                 mariadb
-                phpPackages.mysql
+                phpPackages.mysqlclient # Use this instead of phpPackages.mysql
                 php82Packages.gd
                 php82Packages.mbstring
                 php82Packages.xml
