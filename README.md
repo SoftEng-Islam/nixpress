@@ -37,3 +37,13 @@
 ```bash
 git clone https://github.com/yourusername/learnify.git
 cd learnify
+```
+---
+
+## Development
+
+### 💡 Why Use Nix Flakes?
+
+- **Reproducibility**: You can easily replicate this setup anywhere, ensuring consistency across environments.
+- **Portability**: If you ever need to move this project to another system, simply apply the flake and you’re good to go.
+- **Declarative Configuration**: NixOS is designed to be declarative, which means you define your entire environment in a few files, reducing manual configuration.
