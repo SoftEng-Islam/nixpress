@@ -3,10 +3,12 @@
     "WordPress + PHP + NGINX + MySQL development environment on NixOS";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url =
+      "github:nixos/nixpkgs/nixos-unstable"; # You can change this to a stable version if needed
     flake-utils.url = "github:numtide/flake-utils";
+    # Use the correct GitHub reference for the NixOS flake, or you can directly reference your local system path if needed.
     nixos.url =
-      "github:NixOS/nixos"; # Make sure you are using the correct URL for the NixOS flake.
+      "github:NixOS/nixos"; # Alternatively, use a stable version, e.g., "github:NixOS/nixos/nixos-21.11"
   };
 
   outputs = { self, nixpkgs, flake-utils, nixos, ... }:
@@ -30,7 +32,7 @@
           '';
         };
 
-        # Fix this part by properly defining your NixOS configuration
+        # If you're using custom NixOS configuration, make sure the paths here are correct
         nixosConfigurations = {
           wpHost = nixos.lib.nixosSystem {
             system = "x86_64-linux";
