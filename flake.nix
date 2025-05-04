@@ -5,7 +5,8 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    nixos.url = "github:NixOS/nixos";
+    nixos.url =
+      "github:NixOS/nixos"; # Make sure you are using the correct URL for the NixOS flake.
   };
 
   outputs = { self, nixpkgs, flake-utils, nixos, ... }:
@@ -29,6 +30,7 @@
           '';
         };
 
+        # Fix this part by properly defining your NixOS configuration
         nixosConfigurations = {
           wpHost = nixos.lib.nixosSystem {
             system = "x86_64-linux";
