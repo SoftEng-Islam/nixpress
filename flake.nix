@@ -1,18 +1,20 @@
 {
-  description = "WordPress + PHP + MySQL + Caddy dev environment";
+  description = "WordPress dev env with PHP, MySQL, Redis, and Caddy";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    devenv.url = "github:cachix/devenv";
     flake-utils.url = "github:numtide/flake-utils";
+    devenv.url = "github:cachix/devenv";
   };
 
-  outputs = { self, nixpkgs, devenv, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils, devenv, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = import nixpkgs { inherit system; };
       in {
         devShells.default = devenv.lib.mkShell {
           inherit pkgs;
+
+          packages = with pkgs; [ git wp-cli mariadb php82 ];
 
           languages.php.enable = true;
 
@@ -21,13 +23,14 @@
               enabled ++ (with all; [ redis pdo_mysql xdebug ]);
             extraConfig = ''
               memory_limit = -1
+              max_execution_time = 0
               xdebug.mode = debug
               xdebug.start_with_request = yes
               xdebug.idekey = vscode
-              xdebug.log_level = 0
-              max_execution_time = 0
             '';
           };
+
+          services.redis.enable = true;
 
           services.mysql = {
             enable = true;
@@ -39,8 +42,6 @@
             }];
           };
 
-          services.redis.enable = true;
-
           services.caddy = {
             enable = true;
             virtualHosts."wp.localhost".extraConfig = ''
@@ -51,8 +52,6 @@
           };
 
           certificates = [ "wp.localhost" ];
-
-          packages = with pkgs; [ git wp-cli mariadb php82 caddy ];
         };
       });
 }
