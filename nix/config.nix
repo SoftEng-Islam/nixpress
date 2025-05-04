@@ -1,7 +1,3 @@
-
-### 3. `nix/config.nix` - NixOS Configuration
-
-```nix
 { config, pkgs, lib, ... }:
 
 {
