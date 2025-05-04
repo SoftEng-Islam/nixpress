@@ -1,57 +1,39 @@
 {
-  description = "WordPress dev env with PHP, MySQL, Redis, and Caddy";
+  description =
+    "WordPress + PHP + NGINX + MySQL development environment on NixOS";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    devenv.url = "github:cachix/devenv";
+    nixos.url = "github:NixOS/nixos";
   };
 
-  outputs = { self, nixpkgs, flake-utils, devenv, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; };
-      in {
-        devShells.default = devenv.lib.mkShell {
-          inherit pkgs;
+  outputs = { self, nixpkgs, flake-utils, nixos, ... }:
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system: {
 
-          packages = with pkgs; [ git wp-cli mariadb php82 ];
+      devShell = pkgs.mkShell {
+        buildInputs = [
+          pkgs.php
+          pkgs.php82
+          pkgs.php82.extensions.pdo_mysql
+          pkgs.php82.extensions.redis
+          pkgs.wp-cli
+          pkgs.mysql
+          pkgs.nginx
+        ];
 
-          languages.php.enable = true;
+        shellHook = ''
+          echo "Welcome to your WordPress development environment!"
+          export WORDPRESS_DIR=${toString ./wordpress}
+        '';
+      };
 
-          languages.php.package = pkgs.php82.buildEnv {
-            extensions = { all, enabled }:
-              enabled ++ (with all; [ redis pdo_mysql xdebug ]);
-            extraConfig = ''
-              memory_limit = -1
-              max_execution_time = 0
-              xdebug.mode = debug
-              xdebug.start_with_request = yes
-              xdebug.idekey = vscode
-            '';
-          };
-
-          services.redis.enable = true;
-
-          services.mysql = {
-            enable = true;
-            initialDatabases = [{ name = "wordpress"; }];
-            ensureUsers = [{
-              name = "softeng";
-              password = "1122";
-              ensurePermissions = { "wordpress.*" = "ALL PRIVILEGES"; };
-            }];
-          };
-
-          services.caddy = {
-            enable = true;
-            virtualHosts."wp.localhost".extraConfig = ''
-              root * .
-              php_fastcgi 127.0.0.1:9000
-              file_server
-            '';
-          };
-
-          certificates = [ "wp.localhost" ];
+      nixosConfigurations = {
+        wpHost = nixos.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [ ./nix/config.nix ./nix/wordpress.nix ./nix/mysql.nix ];
+          specialArgs = { inherit system; };
         };
-      });
+      };
+    });
 }
