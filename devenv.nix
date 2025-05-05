@@ -80,6 +80,9 @@
     echo hello from $GREET
   '';
 
+  scripts.setcap-nginx.exec = ''
+    sudo setcap 'cap_net_bind_service=+ep' ${pkgs.nginx}/bin/nginx
+  '';
   # Sets up local WordPress core
   enterShell = ''
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
