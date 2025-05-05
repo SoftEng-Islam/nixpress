@@ -48,6 +48,7 @@
   # MySQL
   services.mysql = {
     enable = true;
+    settings.mysqld.port = 3307;
     initialDatabases = [{ name = "wordpress"; }];
     ensureUsers = [{
       name = "wordpress";
