@@ -49,25 +49,12 @@
     }];
   };
 
-  # Configuration settings for PHP-FPM pools
-  services.phpfpm.settings = {
-    "pm" = "dynamic";
-    "pm.max_children" = 10;
-    "pm.start_servers" = 2;
-    "pm.min_spare_servers" = 1;
-    "pm.max_spare_servers" = 10;
-    "access.log" = "/tmp/php-fpm.access.log";
-    "slowlog" = "/tmp/php-fpm.slow.log";
-    "request_slowlog_timeout" = "5s";
-    "catch_workers_output" = "yes";
-  };
-
   services.caddy = {
     enable = false;
     config = ''
       :2015 {
         handle_path / {
-          reverse_proxy localhost:8080
+          reverse_proxy localpress:8080
         }
       }
     '';
@@ -83,7 +70,7 @@
         listen 8080;
         root ${config.devenv.root}/html;
         index index.php index.html;
-        server_name localhost;
+        server_name localpress;
 
         # Rewrite rules
         if (!-e $request_filename) {
@@ -119,14 +106,14 @@
     php --version
 
     echo ""
-    echo "🚀 WordPress is available at: http://localhost:8080"
+    echo "🚀 WordPress is available at: http://localpress:8080"
     echo ""
 
     # Open in browser (cross-platform)
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localhost:8080
+      xdg-open http://localpress:8080
     elif command -v open > /dev/null; then
-      open http://localhost:8080
+      open http://localpress:8080
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
@@ -134,13 +121,13 @@
 
   processes.open-url.exec = ''
     echo ""
-    echo "🚀 WordPress is running at: http://localhost:8080"
+    echo "🚀 WordPress is running at: http://localpress:8080"
     echo ""
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localhost:8080
+      xdg-open http://localpress:8080
     elif command -v open > /dev/null; then
-      open http://localhost:8080
+      open http://localpress:8080
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
