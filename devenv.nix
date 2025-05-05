@@ -9,17 +9,6 @@
   # https://devenv.sh/packages/
   packages = [ pkgs.git pkgs.wp-cli pkgs.caddy ];
 
-  services.caddy = {
-    enable = false;
-    config = ''
-      :2015 {
-        handle_path / {
-          reverse_proxy localhost:8080
-        }
-      }
-    '';
-  };
-
   # https://devenv.sh/languages/
   # Configure PHP
   languages.php.package = pkgs.php83.buildEnv {
@@ -58,6 +47,22 @@
       password = "wordpress";
       ensurePermissions = { "wordpress.*" = "ALL PRIVILEGES"; };
     }];
+  };
+
+  services.phpfpm = {
+    enable = true;
+    package = pkgs.php83-fpm;
+  };
+
+  services.caddy = {
+    enable = false;
+    config = ''
+      :2015 {
+        handle_path / {
+          reverse_proxy localhost:8080
+        }
+      }
+    '';
   };
 
   # NGINX
