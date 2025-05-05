@@ -49,6 +49,8 @@
   services.nginx = {
     enable = true;
     httpConfig = ''
+      types_hash_max_size 2048;
+      types_hash_bucket_size 128;
       server {
         listen 80;
         root ${config.devenv.root}/html;
