@@ -1,11 +1,13 @@
-.devenv
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
 .direnv
 
-projects/*
-assets/*
-!projects/.keep
-!assets/.keep
+# pre-commit
+.pre-commit-config.yaml
 
-.helix/
-
-.DS_Store
+# WordPress site
+/html/
+/vendor/
