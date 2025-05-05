@@ -7,7 +7,18 @@
   env.GREET = "devenv";
 
   # https://devenv.sh/packages/
-  packages = [ pkgs.git pkgs.wp-cli ];
+  packages = [ pkgs.git pkgs.wp-cli pkgs.caddy ];
+
+  services.caddy = {
+    enable = true;
+    config = ''
+      :2015 {
+        handle_path / {
+          reverse_proxy localhost:8080
+        }
+      }
+    '';
+  };
 
   # https://devenv.sh/languages/
   # Configure PHP
@@ -82,7 +93,7 @@
 
   # Sets up local WordPress core
   enterShell = ''
-    sudo setcap 'cap_net_bind_service=+ep' ${pkgs.nginx}/bin/nginx
+    # sudo setcap 'cap_net_bind_service=+ep' ${pkgs.nginx}/bin/nginx
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
     composer install
     php --version
