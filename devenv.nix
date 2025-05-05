@@ -49,9 +49,17 @@
     }];
   };
 
-  services.phpfpm = {
-    enable = true;
-    phpPackage = pkgs.php;
+  # Configuration settings for PHP-FPM pools
+  services.phpfpm.settings = {
+    "pm" = "dynamic";
+    "pm.max_children" = 10;
+    "pm.start_servers" = 2;
+    "pm.min_spare_servers" = 1;
+    "pm.max_spare_servers" = 10;
+    "access.log" = "/tmp/php-fpm.access.log";
+    "slowlog" = "/tmp/php-fpm.slow.log";
+    "request_slowlog_timeout" = "5s";
+    "catch_workers_output" = "yes";
   };
 
   services.caddy = {
