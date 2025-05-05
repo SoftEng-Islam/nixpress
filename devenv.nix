@@ -51,7 +51,7 @@
 
   services.phpfpm = {
     enable = true;
-    package = pkgs.php83-fpm;
+    phpPackage = pkgs.php;
   };
 
   services.caddy = {
