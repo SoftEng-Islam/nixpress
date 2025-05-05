@@ -54,7 +54,7 @@ in {
     config = ''
       :2015 {
         handle_path / {
-          reverse_proxy localpress:${listenPort}
+          reverse_proxy localpress:${toString listenPort}
         }
       }
     '';
@@ -67,7 +67,7 @@ in {
       types_hash_max_size 2048;
       types_hash_bucket_size 128;
       server {
-        listen ${listenPort};
+        listen ${toString listenPort};
         root ${config.devenv.root}/html;
         index index.php index.html;
         server_name localpress;
@@ -106,14 +106,14 @@ in {
     php --version
 
     echo ""
-    echo "🚀 WordPress is available at: http://localpress:${listenPort}"
+    echo "🚀 WordPress is available at: http://localpress:${toString listenPort}"
     echo ""
 
     # Open in browser (cross-platform)
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localpress:${listenPort}
+      xdg-open http://localpress:${toString listenPort}
     elif command -v open > /dev/null; then
-      open http://localpress:${listenPort}
+      open http://localpress:${toString listenPort}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
@@ -121,13 +121,13 @@ in {
 
   processes.open-url.exec = ''
     echo ""
-    echo "🚀 WordPress is running at: http://localpress:${listenPort}"
+    echo "🚀 WordPress is running at: http://localpress:${toString listenPort}"
     echo ""
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localpress:${listenPort}
+      xdg-open http://localpress:${toString listenPort}
     elif command -v open > /dev/null; then
-      open http://localpress:${listenPort}
+      open http://localpress:${toString listenPort}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
