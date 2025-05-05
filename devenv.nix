@@ -119,6 +119,23 @@
     fi
   '';
 
+  processes.open-url.exec = ''
+    echo ""
+    echo "🚀 WordPress is running at: http://localhost:8080"
+    echo ""
+
+    if command -v xdg-open > /dev/null; then
+      xdg-open http://localhost:8080
+    elif command -v open > /dev/null; then
+      open http://localhost:8080
+    else
+      echo "⚠️ Could not detect a browser command to open the URL."
+    fi
+
+    # Keep process alive so logs stay visible in `devenv up`
+    sleep 300
+  '';
+
   # https://devenv.sh/tasks/
   # tasks = {
   #   "myproj:setup".exec = "mytool build";
