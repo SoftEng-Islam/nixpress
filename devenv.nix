@@ -101,6 +101,22 @@
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
     composer install
     php --version
+      [ -f composer.json ] && composer install || echo "No composer.json found, skipping composer install"
+
+    php --version
+
+    echo ""
+    echo "🚀 WordPress is available at: http://localhost:8080"
+    echo ""
+
+    # Open in browser (cross-platform)
+    if command -v xdg-open > /dev/null; then
+      xdg-open http://localhost:8080
+    elif command -v open > /dev/null; then
+      open http://localhost:8080
+    else
+      echo "⚠️ Could not detect a browser command to open the URL."
+    fi
   '';
 
   # https://devenv.sh/tasks/
