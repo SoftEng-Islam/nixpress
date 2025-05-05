@@ -1,6 +1,6 @@
 { pkgs, lib, config, inputs, ... }:
-
-{
+let listenPort = 4234;
+in {
   # https://devenv.sh/basics/
   env.WORDPRESS_VERSION = "6.8";
   env.WORDPRESS_REPO = "https://github.com/WordPress/WordPress";
@@ -54,7 +54,7 @@
     config = ''
       :2015 {
         handle_path / {
-          reverse_proxy localpress:8080
+          reverse_proxy localpress:${listenPort}
         }
       }
     '';
@@ -67,7 +67,7 @@
       types_hash_max_size 2048;
       types_hash_bucket_size 128;
       server {
-        listen 8080;
+        listen ${listenPort};
         root ${config.devenv.root}/html;
         index index.php index.html;
         server_name localpress;
@@ -106,14 +106,14 @@
     php --version
 
     echo ""
-    echo "🚀 WordPress is available at: http://localpress:8080"
+    echo "🚀 WordPress is available at: http://localpress:${listenPort}"
     echo ""
 
     # Open in browser (cross-platform)
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localpress:8080
+      xdg-open http://localpress:${listenPort}
     elif command -v open > /dev/null; then
-      open http://localpress:8080
+      open http://localpress:${listenPort}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
@@ -121,13 +121,13 @@
 
   processes.open-url.exec = ''
     echo ""
-    echo "🚀 WordPress is running at: http://localpress:8080"
+    echo "🚀 WordPress is running at: http://localpress:${listenPort}"
     echo ""
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localpress:8080
+      xdg-open http://localpress:${listenPort}
     elif command -v open > /dev/null; then
-      open http://localpress:8080
+      open http://localpress:${listenPort}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
