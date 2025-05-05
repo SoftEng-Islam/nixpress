@@ -10,7 +10,7 @@
   packages = [ pkgs.git pkgs.wp-cli pkgs.caddy ];
 
   services.caddy = {
-    enable = true;
+    enable = false;
     config = ''
       :2015 {
         handle_path / {
@@ -31,12 +31,15 @@
   };
   languages.php.fpm.pools.web = {
     settings = {
-      "clear_env" = "no";
       "pm" = "dynamic";
       "pm.max_children" = 10;
       "pm.start_servers" = 2;
       "pm.min_spare_servers" = 1;
       "pm.max_spare_servers" = 10;
+      "access.log" = "/tmp/php-fpm.access.log";
+      "slowlog" = "/tmp/php-fpm.slow.log";
+      "request_slowlog_timeout" = "5s";
+      "catch_workers_output" = "yes";
     };
   };
   languages.php.enable = true;
