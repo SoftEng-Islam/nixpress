@@ -1,5 +1,7 @@
 { pkgs, lib, config, inputs, ... }:
-let listenPort = 4234;
+let
+  listenPort = 8062;
+  serverName = "localhost";
 in {
   # https://devenv.sh/basics/
   env.WORDPRESS_VERSION = "6.8";
@@ -18,20 +20,26 @@ in {
       smtp_port = 1025
     '';
   };
-  languages.php.fpm.pools.web = {
-    settings = {
-      "pm" = "dynamic";
-      "pm.max_children" = 10;
-      "pm.start_servers" = 2;
-      "pm.min_spare_servers" = 1;
-      "pm.max_spare_servers" = 10;
-      "access.log" = "/tmp/php-fpm.access.log";
-      "slowlog" = "/tmp/php-fpm.slow.log";
-      "request_slowlog_timeout" = "5s";
-      "catch_workers_output" = "yes";
+  languages.php = {
+    enable = true;
+    version = "8.1";
+    ini = ''
+      memory_limit = 256M
+    '';
+    fpm.pools.web = {
+      settings = {
+        "pm" = "dynamic";
+        "pm.max_children" = 10;
+        "pm.start_servers" = 2;
+        "pm.min_spare_servers" = 1;
+        "pm.max_spare_servers" = 10;
+        "access.log" = "/tmp/php-fpm.access.log";
+        "slowlog" = "/tmp/php-fpm.slow.log";
+        "request_slowlog_timeout" = "5s";
+        "catch_workers_output" = "yes";
+      };
     };
   };
-  languages.php.enable = true;
 
   # https://devenv.sh/processes/
   # processes.cargo-watch.exec = "cargo-watch";
@@ -49,28 +57,26 @@ in {
     }];
   };
 
-  services.caddy = {
-    enable = false;
-    config = ''
-      :2015 {
-        handle_path / {
-          reverse_proxy localpress:${toString listenPort}
-        }
-      }
+  services.caddy.enable = true;
+  services.caddy.virtualHosts."http://${serverName}:${listenPort}" = {
+    extraConfig = ''
+      root * public
+      php_fastcgi unix/${config.languages.php.fpm.pools.web.socket}
+      file_server
     '';
   };
-
   # NGINX
   services.nginx = {
-    enable = true;
+    enable = false;
     httpConfig = ''
       types_hash_max_size 2048;
       types_hash_bucket_size 128;
+      keepalive_timeout  65;
       server {
         listen ${toString listenPort};
         root ${config.devenv.root}/html;
         index index.php index.html;
-        server_name localpress;
+        server_name ${serverName};
 
         # Rewrite rules
         if (!-e $request_filename) {
@@ -106,14 +112,16 @@ in {
     php --version
 
     echo ""
-    echo "🚀 WordPress is available at: http://localpress:${toString listenPort}"
+    echo "🚀 WordPress is available at: http://${serverName}:${
+      toString listenPort
+    }"
     echo ""
 
     # Open in browser (cross-platform)
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localpress:${toString listenPort}
+      xdg-open http://${serverName}:${toString listenPort}
     elif command -v open > /dev/null; then
-      open http://localpress:${toString listenPort}
+      open http://${serverName}:${toString listenPort}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
@@ -121,13 +129,15 @@ in {
 
   processes.open-url.exec = ''
     echo ""
-    echo "🚀 WordPress is running at: http://localpress:${toString listenPort}"
+    echo "🚀 WordPress is running at: http://${serverName}:${
+      toString listenPort
+    }"
     echo ""
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://localpress:${toString listenPort}
+      xdg-open http://${serverName}:${toString listenPort}
     elif command -v open > /dev/null; then
-      open http://localpress:${toString listenPort}
+      open http://${serverName}:${toString listenPort}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
