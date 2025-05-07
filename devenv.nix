@@ -61,7 +61,6 @@ in {
   services.caddy.enable = true;
 
   services.caddy.virtualHosts.${serverName} = {
-    listenPort = listenPort;
     extraConfig = ''
       root * html
       php_fastcgi 127.0.0.1:${toString listenPort}
