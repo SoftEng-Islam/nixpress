@@ -1,6 +1,6 @@
 { pkgs, lib, config, inputs, ... }:
 let
-  listenPort = 8062;
+  listenPort = 2019;
   serverName = "localhost";
 in {
   # https://devenv.sh/basics/
@@ -58,7 +58,7 @@ in {
   };
 
   services.caddy.enable = true;
-  services.caddy.virtualHosts."http://${serverName}:${listenPort}" = {
+  services.caddy.virtualHosts."http://${serverName}:${toString listenPort}" = {
     extraConfig = ''
       root * public
       php_fastcgi unix/${config.languages.php.fpm.pools.web.socket}
