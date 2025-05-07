@@ -8,13 +8,7 @@ in {
   env.WORDPRESS_REPO = "https://github.com/WordPress/WordPress";
   env.GREET = "devenv";
 
-  packages = [
-    pkgs.git
-    pkgs.wp-cli
-    pkgs.caddy
-    pkgs.mariadb
-    pkgs.composer
-  ];
+  packages = [ pkgs.git pkgs.wp-cli pkgs.caddy pkgs.mariadb pkgs.composer ];
 
   languages.php = {
     enable = true;
@@ -41,7 +35,8 @@ in {
     };
   };
 
-  processes.php-fpm.exec = "${config.languages.php.fpm.pools.web.phpPackage}/bin/php-fpm --nodaemonize --fpm-config ${config.languages.php.fpm.pools.web.finalConfig}";
+  processes.php-fpm.exec =
+    "${config.languages.php.fpm.pools.web.phpPackage}/bin/php-fpm --nodaemonize --fpm-config ${config.languages.php.fpm.pools.web.finalConfig}";
 
   services.mysql = {
     enable = true;
@@ -87,7 +82,7 @@ in {
       define('DB_PASSWORD', 'wordpress');
       define('DB_HOST', '127.0.0.1');
       define('DB_CHARSET', 'utf8');
-      define('DB_COLLATE', '');
+      define('DB_COLLATE', "");
 
       define('WP_DEBUG', true);
       define('WP_DEBUG_LOG', true);
