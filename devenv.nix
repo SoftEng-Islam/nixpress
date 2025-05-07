@@ -1,6 +1,6 @@
 { pkgs, lib, config, inputs, ... }:
 let
-  listenPort = 2019;
+  listenPort = 9000;
   serverName = "localhost";
 in {
   # https://devenv.sh/basics/
@@ -22,12 +22,13 @@ in {
   };
   languages.php = {
     enable = true;
-    version = "8.1";
+    version = "8.3";
     ini = ''
       memory_limit = 256M
     '';
     fpm.pools.web = {
       settings = {
+        listen = "127.0.0.1:${toString listenPort}";
         "pm" = "dynamic";
         "pm.max_children" = 10;
         "pm.start_servers" = 2;
@@ -58,13 +59,16 @@ in {
   };
 
   services.caddy.enable = true;
-  services.caddy.virtualHosts."http://${serverName}:${toString listenPort}" = {
+
+  services.caddy.virtualHosts.${serverName} = {
+    listenPort = listenPort;
     extraConfig = ''
-      root * public
-      php_fastcgi unix/${config.languages.php.fpm.pools.web.socket}
+      root * html
+      php_fastcgi 127.0.0.1:${toString listenPort}
       file_server
     '';
   };
+
   # NGINX
   services.nginx = {
     enable = false;
