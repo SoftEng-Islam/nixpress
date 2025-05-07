@@ -2,6 +2,7 @@
 let
   listenPort = 9000;
   serverName = "localhost";
+  wordpressRoot = "${config.devenv.root}/html";
 in {
   # https://devenv.sh/basics/
   env.WORDPRESS_VERSION = "6.8";
@@ -9,22 +10,23 @@ in {
   env.GREET = "devenv";
 
   # https://devenv.sh/packages/
-  packages = [ pkgs.git pkgs.wp-cli pkgs.caddy ];
+  packages = [
+    pkgs.git
+    pkgs.wp-cli
+    pkgs.caddy
+    pkgs.mariadb
+    pkgs.composer
+  ];
 
   # https://devenv.sh/languages/
-  # Configure PHP
-  languages.php.package = pkgs.php83.buildEnv {
-    extensions = ({ enabled, all }: enabled ++ (with all; [ yaml ]));
-    extraConfig = ''
-      sendmail_path = ${config.services.mailpit.package}/bin/mailpit sendmail
-      smtp_port = 1025
-    '';
-  };
   languages.php = {
     enable = true;
     version = "8.3";
+    extensions = [ "yaml" ];
     ini = ''
       memory_limit = 256M
+      upload_max_filesize = 64M
+      post_max_size = 64M
     '';
     fpm.pools.web = {
       settings = {
@@ -43,13 +45,14 @@ in {
   };
 
   # https://devenv.sh/processes/
-  # processes.cargo-watch.exec = "cargo-watch";
+  processes.php-fpm.exec = "${config.languages.php.fpm.pools.web.phpPackage}/bin/php-fpm --nodaemonize --fpm-config ${config.languages.php.fpm.pools.web.finalConfig}";
 
   # https://devenv.sh/services/
   # MySQL
   services.mysql = {
     enable = true;
-    settings.mysqld.port = 3307;
+    package = pkgs.mariadb;
+    settings.mysqld.port = 3306;
     initialDatabases = [{ name = "wordpress"; }];
     ensureUsers = [{
       name = "wordpress";
@@ -58,73 +61,85 @@ in {
     }];
   };
 
-  services.caddy.enable = true;
-
-  services.caddy.virtualHosts.${serverName} = {
-    extraConfig = ''
-      root * html
-      php_fastcgi 127.0.0.1:${toString listenPort}
-      file_server
-    '';
-  };
-
-  # NGINX
-  services.nginx = {
-    enable = false;
-    httpConfig = ''
-      types_hash_max_size 2048;
-      types_hash_bucket_size 128;
-      keepalive_timeout  65;
-      server {
-        listen ${toString listenPort};
-        root ${config.devenv.root}/html;
-        index index.php index.html;
-        server_name ${serverName};
-
-        # Rewrite rules
-        if (!-e $request_filename) {
-          rewrite /wp-admin$ $scheme://$host$request_uri/ permanent;
-          rewrite ^(/[^/]+)?(/wp-.*) $2 last;
-          rewrite ^(/[^/]+)?(/.*\.php) $2 last;
-        }
-
-        location ~ \.php$ {
-          try_files $uri =404;
-          fastcgi_pass unix:${config.languages.php.fpm.pools.web.socket};
-          include ${pkgs.nginx}/conf/fastcgi.conf;
-        }
-    '' + (builtins.readFile ./conf/nginx/locations) + "}";
+  services.caddy = {
+    enable = true;
+    virtualHosts."${serverName}" = {
+      extraConfig = ''
+        root * ${wordpressRoot}
+        php_fastcgi 127.0.0.1:${toString listenPort}
+        file_server
+      '';
+    };
   };
 
   # Mailpit
-  services.mailpit = { enable = true; };
+  services.mailpit = {
+    enable = true;
+    openFirewall = true;
+  };
 
   # https://devenv.sh/scripts/
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
 
+  scripts.wp.exec = ''
+    ${pkgs.wp-cli}/bin/wp --path=${wordpressRoot} "$@"
+  '';
+
   # Sets up local WordPress core
   enterShell = ''
-    # sudo setcap 'cap_net_bind_service=+ep' ${pkgs.nginx}/bin/nginx
-    test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
-    composer install
-    php --version
-      [ -f composer.json ] && composer install || echo "No composer.json found, skipping composer install"
+    # Clone WordPress if not already present
+    if [ ! -d "${wordpressRoot}" ]; then
+      git clone --depth 1 --branch "$WORDPRESS_VERSION" "$WORDPRESS_REPO" "${wordpressRoot}"
+      chmod -R 755 "${wordpressRoot}"
+      chmod -R 777 "${wordpressRoot}/wp-content"
+    fi
+
+    # Install composer dependencies if composer.json exists
+    if [ -f "${wordpressRoot}/composer.json" ]; then
+      composer install --working-dir="${wordpressRoot}"
+    else
+      echo "No composer.json found, skipping composer install"
+    fi
+
+    # Create wp-config.php if it doesn't exist
+    if [ ! -f "${wordpressRoot}/wp-config.php" ]; then
+      cat > "${wordpressRoot}/wp-config.php" <<EOF
+<?php
+define('DB_NAME', 'wordpress');
+define('DB_USER', 'wordpress');
+define('DB_PASSWORD', 'wordpress');
+define('DB_HOST', '127.0.0.1');
+define('DB_CHARSET', 'utf8');
+define('DB_COLLATE', '');
+
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+
+if (!defined('ABSPATH')) {
+  define('ABSPATH', __DIR__ . '/');
+}
+
+require_once ABSPATH . 'wp-settings.php';
+EOF
+    fi
 
     php --version
 
     echo ""
-    echo "🚀 WordPress is available at: http://${serverName}:${
-      toString listenPort
-    }"
+    echo "🚀 WordPress is available at: http://${serverName}:80"
+    echo "MySQL credentials:"
+    echo "  Database: wordpress"
+    echo "  Username: wordpress"
+    echo "  Password: wordpress"
     echo ""
 
     # Open in browser (cross-platform)
     if command -v xdg-open > /dev/null; then
-      xdg-open http://${serverName}:${toString listenPort}
+      xdg-open http://${serverName}
     elif command -v open > /dev/null; then
-      open http://${serverName}:${toString listenPort}
+      open http://${serverName}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
@@ -132,15 +147,13 @@ in {
 
   processes.open-url.exec = ''
     echo ""
-    echo "🚀 WordPress is running at: http://${serverName}:${
-      toString listenPort
-    }"
+    echo "🚀 WordPress is running at: http://${serverName}"
     echo ""
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://${serverName}:${toString listenPort}
+      xdg-open http://${serverName}
     elif command -v open > /dev/null; then
-      open http://${serverName}:${toString listenPort}
+      open http://${serverName}
     else
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
@@ -149,20 +162,9 @@ in {
     sleep 300
   '';
 
-  # https://devenv.sh/tasks/
-  # tasks = {
-  #   "myproj:setup".exec = "mytool build";
-  #   "devenv:enterShell".after = [ "myproj:setup" ];
-  # };
-
   # https://devenv.sh/tests/
   enterTest = ''
     echo "Running tests"
     git --version | grep --color=auto "${pkgs.git.version}"
   '';
-
-  # https://devenv.sh/pre-commit-hooks/
-  # pre-commit.hooks.shellcheck.enable = true;
-
-  # See full reference at https://devenv.sh/reference/options/
 }
