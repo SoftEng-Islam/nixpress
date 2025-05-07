@@ -4,12 +4,10 @@ let
   serverName = "localhost";
   wordpressRoot = "${config.devenv.root}/html";
 in {
-  # https://devenv.sh/basics/
   env.WORDPRESS_VERSION = "6.8";
   env.WORDPRESS_REPO = "https://github.com/WordPress/WordPress";
   env.GREET = "devenv";
 
-  # https://devenv.sh/packages/
   packages = [
     pkgs.git
     pkgs.wp-cli
@@ -18,7 +16,6 @@ in {
     pkgs.composer
   ];
 
-  # https://devenv.sh/languages/
   languages.php = {
     enable = true;
     version = "8.3";
@@ -44,11 +41,8 @@ in {
     };
   };
 
-  # https://devenv.sh/processes/
   processes.php-fpm.exec = "${config.languages.php.fpm.pools.web.phpPackage}/bin/php-fpm --nodaemonize --fpm-config ${config.languages.php.fpm.pools.web.finalConfig}";
 
-  # https://devenv.sh/services/
-  # MySQL
   services.mysql = {
     enable = true;
     package = pkgs.mariadb;
@@ -72,13 +66,11 @@ in {
     };
   };
 
-  # Mailpit
   services.mailpit = {
     enable = true;
     openFirewall = true;
   };
 
-  # https://devenv.sh/scripts/
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
@@ -87,8 +79,26 @@ in {
     ${pkgs.wp-cli}/bin/wp --path=${wordpressRoot} "$@"
   '';
 
-  # Sets up local WordPress core
-  enterShell = ''
+  enterShell = let
+    wpConfig = pkgs.writeText "wp-config.php" ''
+      <?php
+      define('DB_NAME', 'wordpress');
+      define('DB_USER', 'wordpress');
+      define('DB_PASSWORD', 'wordpress');
+      define('DB_HOST', '127.0.0.1');
+      define('DB_CHARSET', 'utf8');
+      define('DB_COLLATE', '');
+
+      define('WP_DEBUG', true);
+      define('WP_DEBUG_LOG', true);
+
+      if (!defined('ABSPATH')) {
+        define('ABSPATH', __DIR__ . '/');
+      }
+
+      require_once ABSPATH . 'wp-settings.php';
+    '';
+  in ''
     # Clone WordPress if not already present
     if [ ! -d "${wordpressRoot}" ]; then
       git clone --depth 1 --branch "$WORDPRESS_VERSION" "$WORDPRESS_REPO" "${wordpressRoot}"
@@ -105,24 +115,8 @@ in {
 
     # Create wp-config.php if it doesn't exist
     if [ ! -f "${wordpressRoot}/wp-config.php" ]; then
-      cat > "${wordpressRoot}/wp-config.php" <<EOF
-<?php
-define('DB_NAME', 'wordpress');
-define('DB_USER', 'wordpress');
-define('DB_PASSWORD', 'wordpress');
-define('DB_HOST', '127.0.0.1');
-define('DB_CHARSET', 'utf8');
-define('DB_COLLATE', '');
-
-define('WP_DEBUG', true);
-define('WP_DEBUG_LOG', true);
-
-if (!defined('ABSPATH')) {
-  define('ABSPATH', __DIR__ . '/');
-}
-
-require_once ABSPATH . 'wp-settings.php';
-EOF
+      cp ${wpConfig} "${wordpressRoot}/wp-config.php"
+      chmod 644 "${wordpressRoot}/wp-config.php"
     fi
 
     php --version
@@ -158,11 +152,9 @@ EOF
       echo "⚠️ Could not detect a browser command to open the URL."
     fi
 
-    # Keep process alive so logs stay visible in `devenv up`
     sleep 300
   '';
 
-  # https://devenv.sh/tests/
   enterTest = ''
     echo "Running tests"
     git --version | grep --color=auto "${pkgs.git.version}"
