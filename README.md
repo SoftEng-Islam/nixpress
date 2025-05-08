@@ -39,4 +39,4 @@ Clone the repo and enter the dev shell:
 ```bash
 git clone https://github.com/SoftEng-Islam/nixpress
 cd nixpress
-nix develop
+devenv up
