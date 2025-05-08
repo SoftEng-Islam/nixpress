@@ -2,6 +2,9 @@
 
 > 🌀 Reproducible WordPress + PHP + Nginx development environment powered by Nix Flakes
 
+![Wordpress Home Screen](./screenshots/wordpress.png)
+
+
 **nixpress** is a Nix-based development stack for WordPress and PHP applications, designed with NixOS users in mind. It provides a declarative, reproducible setup using Nix Flakes, making it easy to spin up a complete local environment with:
 
 - ✅ WordPress
