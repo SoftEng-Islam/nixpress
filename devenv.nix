@@ -88,12 +88,14 @@ in {
   '';
 
   processes.open-url.exec = ''
-    echo "🚀 WordPress is running at: http://${server_name}:${listen_port}"
+    echo "🚀 WordPress is running at: http://${server_name}:${
+      toString listen_port
+    }"
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://${server_name}:${listen_port}
+      xdg-open http://${server_name}:${toString listen_port}
     elif command -v open > /dev/null; then
-      open http://${server_name}:${listen_port}
+      open http://${server_name}:${toString listen_port}
     else
       echo "⚠️ Could not auto-open browser."
     fi
