@@ -1,6 +1,8 @@
 { pkgs, lib, config, inputs, ... }:
-
-{
+let
+  listen_port = 8012;
+  server_name = "localhost";
+in {
   # https://devenv.sh/basics/
   env.WORDPRESS_VERSION = "6.8.1";
   env.WORDPRESS_REPO = "https://github.com/WordPress/WordPress";
@@ -50,10 +52,10 @@
     enable = true;
     httpConfig = ''
       server {
-        listen 8012;
+        listen ${toString listen_port};
         root ${config.devenv.root}/html;
         index index.php index.html;
-        server_name localhost;
+        server_name ${server_name};
 
         # Rewrite rules
         if (!-e $request_filename) {
@@ -83,6 +85,21 @@
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
     composer install
     php --version
+  '';
+
+  processes.open-url.exec = ''
+    echo "🚀 WordPress is running at: http://${server_name}:${listen_port}"
+
+    if command -v xdg-open > /dev/null; then
+      xdg-open http://${server_name}:${listen_port}
+    elif command -v open > /dev/null; then
+      open http://${server_name}:${listen_port}
+    else
+      echo "⚠️ Could not auto-open browser."
+    fi
+
+    # Prevent the process from exiting immediately so it's visible in logs
+    sleep 600
   '';
 
   # https://devenv.sh/tasks/
