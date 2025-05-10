@@ -18,6 +18,9 @@ in {
     extraConfig = ''
       sendmail_path = ${config.services.mailpit.package}/bin/mailpit sendmail
       smtp_port = 1025
+      upload_max_filesize = 64M
+      post_max_size = 64M
+      max_execution_time = 300
     '';
   };
   languages.php.fpm.pools.web = {
@@ -56,6 +59,9 @@ in {
         root ${config.devenv.root}/html;
         index index.php index.html;
         server_name ${server_name};
+
+        # ✅ Increase max upload size
+        client_max_body_size 64M;
 
         # Rewrite rules
         if (!-e $request_filename) {
