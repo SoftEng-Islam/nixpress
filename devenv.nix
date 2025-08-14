@@ -4,7 +4,7 @@ let
   server_name = "localhost";
 in {
   # https://devenv.sh/basics/
-  env.WORDPRESS_VERSION = "6.8.1";
+  env.WORDPRESS_VERSION = "6.8.2";
   env.WORDPRESS_REPO = "https://github.com/WordPress/WordPress";
   env.GREET = "devenv";
 
