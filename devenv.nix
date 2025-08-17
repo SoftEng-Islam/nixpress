@@ -81,11 +81,6 @@ in {
   # Mailpit
   services.mailpit = { enable = true; };
 
-  # https://devenv.sh/scripts/
-  scripts.hello.exec = ''
-    echo hello from $GREET
-  '';
-
   # Sets up local WordPress core
   enterShell = ''
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
