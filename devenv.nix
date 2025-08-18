@@ -1,6 +1,6 @@
 { pkgs, lib, config, inputs, ... }:
 let
-  listen_port = 8012;
+  listen_port = 8013;
   server_name = "localhost";
 in {
   # https://devenv.sh/basics/
@@ -16,6 +16,7 @@ in {
   languages.php.package = pkgs.php83.buildEnv {
     extensions = ({ enabled, all }: enabled ++ (with all; [ yaml ]));
     extraConfig = ''
+
       sendmail_path = ${config.services.mailpit.package}/bin/mailpit sendmail
       smtp_port = 1025
       upload_max_filesize = 64M
@@ -54,6 +55,7 @@ in {
   services.nginx = {
     enable = true;
     httpConfig = ''
+
       server {
         listen ${toString listen_port};
         root ${config.devenv.root}/html;
@@ -86,6 +88,7 @@ in {
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
     composer install
     php --version
+    exec zsh
   '';
 
   processes.open-url.exec = ''
@@ -113,6 +116,7 @@ in {
 
   # https://devenv.sh/tests/
   enterTest = ''
+
     echo "Running tests"
     git --version | grep --color=auto "${pkgs.git.version}"
   '';
