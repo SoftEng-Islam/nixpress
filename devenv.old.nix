@@ -17,6 +17,7 @@ in {
     extensions = ({ enabled, all }: enabled ++ (with all; [ yaml ]));
     extraConfig = ''
 
+
       sendmail_path = ${config.services.mailpit.package}/bin/mailpit sendmail
       smtp_port = 1025
       upload_max_filesize = 64M
@@ -55,7 +56,6 @@ in {
   services.nginx = {
     enable = true;
     httpConfig = ''
-
       server {
         listen ${toString listen_port};
         root ${config.devenv.root}/html;
@@ -86,12 +86,28 @@ in {
   # Sets up local WordPress core
   enterShell = ''
     test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
+    cd html
+    if ! ./wp-config.php; then
+      wp config create \
+        --dbname=wordpress \
+        --dbuser=wordpress \
+        --dbpass=wordpress \
+        --dbhost=127.0.0.1 \
+        --skip-check
+      wp core install \
+        --url="http://${server_name}:${toString listen_port}" \
+        --title="My Dev Site" \
+        --admin_user=admin \
+        --admin_password=admin \
+        --admin_email=admin@example.com
+    fi
     composer install
     php --version
     exec zsh
   '';
 
   processes.open-url.exec = ''
+
     echo "🚀 WordPress is running at: http://${server_name}:${
       toString listen_port
     }"
@@ -116,6 +132,7 @@ in {
 
   # https://devenv.sh/tests/
   enterTest = ''
+
 
     echo "Running tests"
     git --version | grep --color=auto "${pkgs.git.version}"
