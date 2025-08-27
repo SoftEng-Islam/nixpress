@@ -16,8 +16,6 @@ in {
   languages.php.package = pkgs.php83.buildEnv {
     extensions = ({ enabled, all }: enabled ++ (with all; [ yaml ]));
     extraConfig = ''
-
-
       sendmail_path = ${config.services.mailpit.package}/bin/mailpit sendmail
       smtp_port = 1025
       upload_max_filesize = 64M
@@ -105,7 +103,7 @@ in {
     # fi
     composer install
     php --version
-    exec zsh
+    # exec zsh
   '';
 
   processes.open-url.exec = ''
