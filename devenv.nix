@@ -1,6 +1,6 @@
 { pkgs, lib, config, inputs, ... }:
 let
-  listen_port = 8013;
+  listen_port = 8012;
   server_name = "localhost";
 in {
   # https://devenv.sh/basics/
@@ -83,27 +83,26 @@ in {
 
   # Sets up local WordPress core
   enterShell = ''
-    test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
-    # cd html
-    # Only create wp-config.php if it doesn’t exist
-    # if [ ! -f wp-config.php ]; then
-    # 	wp config create \
-    # 		--dbname=wordpress \
-    # 		--dbuser=wordpress \
-    # 		--dbpass=wordpress \
-    # 		--dbhost=127.0.0.1 \
-    # 		--skip-check
-
-    # 	wp core install \
-    # 		--url="http://${server_name}:${toString listen_port}" \
-    # 		--title="My Dev Site" \
-    # 		--admin_user=admin \
-    # 		--admin_password=admin \
-    # 		--admin_email=admin@example.com
-    # fi
-    composer install
-    php --version
-    # exec zsh
+            test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
+            # cd html
+            # Only create wp-config.php if it doesn’t exist
+            if [ ! -f wp-config.php ]; then
+    				wp config create \
+    					--dbname=wordpress \
+    					--dbuser=wordpress \
+    					--dbpass=wordpress \
+    					--dbhost=127.0.0.1 \
+    					--skip-check
+    				wp core install \
+    					--url="http://${server_name}:${toString listen_port}" \
+    					--title="My Dev Site" \
+    					--admin_user=admin \
+    					--admin_password=admin \
+    					--admin_email=admin@example.com
+            fi
+            composer install
+            php --version
+            # exec zsh
   '';
 
   processes.open-url.exec = ''
