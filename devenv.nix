@@ -55,26 +55,26 @@ in {
     enable = true;
     httpConfig = ''
       server {
-        listen ${toString listen_port};
-        root ${config.devenv.root}/html;
-        index index.php index.html;
-        server_name ${server_name};
+      listen ${toString listen_port};
+      root ${config.devenv.root}/html;
+      index index.php index.html;
+      server_name ${server_name};
 
-        # ✅ Increase max upload size
-        client_max_body_size 64M;
+      # ✅ Increase max upload size
+      client_max_body_size 64M;
 
-        # Rewrite rules
-        if (!-e $request_filename) {
+      # Rewrite rules
+      if (!-e $request_filename) {
           rewrite /wp-admin$ $scheme://$host$request_uri/ permanent;
           rewrite ^(/[^/]+)?(/wp-.*) $2 last;
           rewrite ^(/[^/]+)?(/.*\.php) $2 last;
-        }
+      }
 
-        location ~ \.php$ {
+      location ~ \.php$ {
           try_files $uri =404;
           fastcgi_pass unix:${config.languages.php.fpm.pools.web.socket};
           include ${pkgs.nginx}/conf/fastcgi.conf;
-        }
+      }
     '' + (builtins.readFile ./conf/nginx/locations) + "}";
   };
 
@@ -83,26 +83,34 @@ in {
 
   # Sets up local WordPress core
   enterShell = ''
-            test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
-            # cd html
-            # Only create wp-config.php if it doesn’t exist
-            if [ ! -f wp-config.php ]; then
-    				wp config create \
-    					--dbname=wordpress \
-    					--dbuser=wordpress \
-    					--dbpass=wordpress \
-    					--dbhost=127.0.0.1 \
-    					--skip-check
-    				wp core install \
-    					--url="http://${server_name}:${toString listen_port}" \
-    					--title="My Dev Site" \
-    					--admin_user=admin \
-    					--admin_password=admin \
-    					--admin_email=admin@example.com
-            fi
-            composer install
-            php --version
-            # exec zsh
+    # Clone WordPress core into html/ if not present
+    test -d html || git clone --depth 1 --branch ${config.env.WORDPRESS_VERSION} ${config.env.WORDPRESS_REPO} html
+
+    # Ensure we are working inside html/ for WordPress setup
+    pushd html > /dev/null
+    # Only create wp-config.php if it doesn’t exist
+    if [ ! -f wp-config.php ]; then
+    wp config create \
+        --dbname=wordpress \
+        --dbuser=wordpress \
+        --dbpass=wordpress \
+        --dbhost=127.0.0.1 \
+        --skip-check
+    wp core install \
+        --url="http://${server_name}:${toString listen_port}" \
+        --title="My Dev Site" \
+        --admin_user=admin \
+        --admin_password=admin \
+        --admin_email=admin@example.com
+    fi
+    # return to project root.
+    popd > /dev/null
+
+
+    # Run Composer from project root
+    composer install
+
+    php --version
   '';
 
   processes.open-url.exec = ''
@@ -112,11 +120,11 @@ in {
     }"
 
     if command -v xdg-open > /dev/null; then
-      xdg-open http://${server_name}:${toString listen_port}
+        xdg-open http://${server_name}:${toString listen_port}
     elif command -v open > /dev/null; then
-      open http://${server_name}:${toString listen_port}
+        open http://${server_name}:${toString listen_port}
     else
-      echo "⚠️ Could not auto-open browser."
+        echo "⚠️ Could not auto-open browser."
     fi
 
     # Prevent the process from exiting immediately so it's visible in logs
