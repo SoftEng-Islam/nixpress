@@ -88,7 +88,7 @@ in {
 
     # Ensure we are working inside html/ for WordPress setup
     pushd html > /dev/null
-    # Only create wp-config.php if it doesn’t exist
+    # Only create wp-config.php if it doesn't exist
     if [ ! -f wp-config.php ]; then
     wp config create \
         --dbname=wordpress \
@@ -110,7 +110,9 @@ in {
     # Run Composer from project root
     composer install
 
+    composer -V
     php --version
+    code .
   '';
 
   processes.open-url.exec = ''
@@ -139,8 +141,6 @@ in {
 
   # https://devenv.sh/tests/
   enterTest = ''
-
-
     echo "Running tests"
     git --version | grep --color=auto "${pkgs.git.version}"
   '';
